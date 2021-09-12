@@ -16,7 +16,6 @@ class Race:
         self.mouse_pos = mouse_pos
         self.race = pygame.image.load(f"Graphics/{race}.png").convert_alpha(self.surface)
         self.rect = self.race.get_rect()
-        self.image_check = 0
 
     def draw(self, coord: Tuple[int, int]) -> None:
         """
@@ -28,7 +27,7 @@ class Race:
         self.set_rect(coord)
         pygame.display.update(self.get_rect())
 
-    def get_rect(self) -> ():
+    def get_rect(self):
         """
         Returns rectangular binding of an object.
         :return: Rect of image
@@ -43,15 +42,19 @@ class Race:
         """
         self.rect = Rect(coord[0], coord[1], 200, 250)
 
-    def enlarge(self) -> bool:
+    def enlarge(self) -> None:
         """
-        If your mouse is over an image, it will enlarge said image by around 1.5x and decrease the others as a result.
-        :return: True, if mouse meets image, False otherwise.
+        If your mouse is over an image, it will enlarge said image by around 2x and decrease the others as a result.
+        :return: None
         """
-        if self.get_rect().collidepoint(self.mouse_pos):
-            return True
-        else:
-            return False
+        if self.get_rect().collidepoint(self.mouse_pos) and self.surface.get_at((self.mouse_pos[0], self.mouse_pos[1]))\
+                != (0, 0, 0):
+            # if mouse is hovering over an image and the mouse is not hovering over a black border.
+            # enlarge image
+            self.race = pygame.transform.scale(self.race, (self.get_rect()[0] * 2, self.get_rect()[1] * 2))
+            self.draw((self.get_rect()[0] * 2, self.get_rect()[1] * 2))
+            # make other images smaller
+            print("S")
 
 
 class Main:
@@ -79,15 +82,16 @@ class Main:
         :return: None
         """
         self.check_events()
+
         try:
-            self.races[self.image_check].mouse_pos = self.mouse_pos
-            if self.races[self.image_check].enlarge():
-                # enlarge image, make other images smaller
-                ...
-            else:
-                self.image_check += 1
+            self.races[self.image_check]
         except IndexError:
             self.image_check = 0
+
+        self.races[self.image_check].mouse_pos = self.mouse_pos
+        self.races[self.image_check].enlarge()
+        print(self.mouse_pos)
+        self.image_check += 1
 
     def check_events(self) -> None:
         """
@@ -116,4 +120,3 @@ class Main:
 if __name__ == "__main__":
     program = Main()
     program.run()
-
