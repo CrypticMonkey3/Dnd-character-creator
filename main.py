@@ -10,12 +10,11 @@ FPS_Clock = pygame.time.Clock()
 FPS = 60
 
 
-class Race:
-    def __init__(self, surface, mouse_pos: Tuple[int, int], race: str):
+class Sprite:
+    def __init__(self, surface, image: str):
         self.surface = surface
-        self.mouse_pos = mouse_pos
-        self.race = pygame.image.load(f"Graphics/{race}.png").convert_alpha(self.surface)
-        self.rect = self.race.get_rect()
+        self.image = pygame.image.load(f"Graphics/{image}.png").convert_alpha(self.surface)
+        self.rect = self.image.get_rect()
 
     def draw(self, coord: Tuple[int, int]) -> None:
         """
@@ -23,7 +22,7 @@ class Race:
         :param Tuple[int, int] coord: The coordinates where we'll draw the race image.
         :return: None
         """
-        self.surface.blit(self.race, [coord[0], coord[1]])
+        self.surface.blit(self.image, [coord[0], coord[1]])
         self.set_rect(coord)
         pygame.display.update(self.get_rect())
 
@@ -42,39 +41,44 @@ class Race:
         """
         self.rect = Rect(coord[0], coord[1], 200, 250)
 
-    def enlarge(self) -> None:
+
+class Select(Sprite):
+    def __init__(self, surface, image, mouse_pos: Tuple[int, int]):
+        super().__init__(surface, image)
+        self.mouse_pos = mouse_pos
+
+    def hover(self, rgb: Tuple[int, int, int]) -> None:
         """
-        If your mouse is over an image, it will enlarge said image by around 2x and decrease the others as a result.
+        If your mouse is hovering over an image, it will change the border colour, showing which image we have selected.
         :return: None
         """
+        px_array = pygame.PixelArray(self.image)
         if self.get_rect().collidepoint(self.mouse_pos) and self.surface.get_at((self.mouse_pos[0], self.mouse_pos[1]))\
-                != (0, 0, 0):
-            # if mouse is hovering over an image and the mouse is not hovering over a black border.
-            # enlarge image
-            self.race = pygame.transform.scale(self.race, (self.get_rect()[0] * 2, self.get_rect()[1] * 2))
-            self.draw((self.get_rect()[0] * 2, self.get_rect()[1] * 2))
-            # make other images smaller
-            print("S")
+                != (0, 0, 0, 255) and pygame.mouse.get_focused() != 0:
+            # if mouse pos is over an image, and where the mouse is over is not black (the border) and the mouse is on
+            # the screen
+            px_array.replace((0, 0, 0), rgb)  # replace all occurrences of black with black
+        else:
+            px_array.replace(rgb, (0, 0, 0))  # replace all occurrences of blue with black
+
+        px_array.close()  # close the px_array
+        self.draw((self.get_rect()[0], self.get_rect()[1]))  # draw new results onto the screen
 
 
 class Main:
     def __init__(self):
         self.surface = pygame.display.set_mode((WIDTH, HEIGHT))
         self.races = ["Dragonborn", "Dwarf", "Elf", "Gnome", "Half-elf", "Half-orc", "Halfling", "Human", "Tiefling"]
+        self.classes = ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue",
+                        "Sorcerer", "Warlock", "Wizard"]
         self.mouse_pos = (0, 0)
         self.image_check = 0
 
-        x = 0
-        y = 0
-        for counter, race in enumerate(self.races):  # quick for loop before the game- to load all graphics.
-            self.races[counter] = Race(self.surface, self.mouse_pos, race)
-            self.races[counter].draw((x, y))
-            x += 200
-            if x == 600:
-                y += 250
-                x = 0
+        self.races = self.spawn(self.races, 200, 250, True, True)
+        self.classes = self.spawn(self.classes, 200, 250, False, True)
 
         self.running = True
+        self.choose_race = True
 
     def process(self) -> None:
         """
@@ -83,14 +87,15 @@ class Main:
         """
         self.check_events()
 
-        try:
-            self.races[self.image_check]
-        except IndexError:
-            self.image_check = 0
+        if self.choose_race:
+            try:
+                self.races[self.image_check]
+            except IndexError:
+                self.image_check = 0
 
-        self.races[self.image_check].mouse_pos = self.mouse_pos
-        self.races[self.image_check].enlarge()
-        print(self.mouse_pos)
+            self.races[self.image_check].mouse_pos = self.mouse_pos
+            self.races[self.image_check].hover((0, 0, 255))
+
         self.image_check += 1
 
     def check_events(self) -> None:
@@ -101,9 +106,38 @@ class Main:
         event = pygame.event.poll()  # gets one event at a time- stops our use of for loop in main loop.
         if event.type == MOUSEMOTION:  # if mouse is moved
             self.mouse_pos = pygame.mouse.get_pos()  # get it's new position
+        elif event.type == MOUSEBUTTONUP:  # if the mouse selects something on the screen.
+            if self.choose_race:  # if the user is selecting their race.
+                # select that image and move onto a different stage
+                self.choose_race = False
         elif (event.type == QUIT) or (event.type == KEYDOWN and event.key == K_ESCAPE):
             # if X is pressed or ESC is pressed
             self.running = False  # end program
+
+    def spawn(self, image_list: list, x_increment: int, y_increment: int, draw: bool, make_class: bool) -> List:
+        """
+        Makes an image class and draw it (if needed)
+        :param list image_list: The image list we are manipulating.
+        :param int x_increment: How much we are increasing in the x axis.
+        :param int y_increment: How much we are increasing in the y axis.
+        :param bool draw: True, if we will blit the image on the screen, False, if not.
+        :param bool make_class: True, if we want to make the images an object, False, otherwise.
+        :return: The new object list
+        """
+        x = 0
+        y = 0
+        for counter, image in enumerate(image_list):
+            if make_class:
+                image_list[counter] = Select(self.surface, image_list[counter], self.mouse_pos)
+            if draw:
+                image_list[counter].draw((x, y))
+
+            x += x_increment
+            if x == 600:
+                y += y_increment
+                x = 0
+
+        return image_list
 
     def run(self) -> None:
         """
