@@ -4,4 +4,3 @@
 - - Ability scroller
 - - Stat modifier depending on character
 - - Ability modifier
-- Create class symbols
