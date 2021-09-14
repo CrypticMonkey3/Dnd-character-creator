@@ -76,6 +76,15 @@ class Main:
         self.races = ["Dragonborn", "Dwarf", "Elf", "Gnome", "Half-elf", "Half-orc", "Halfling", "Human", "Tiefling"]
         self.classes = ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue",
                         "Sorcerer", "Warlock", "Wizard"]
+        self.race_description = {"Dragonborn": "Born of dragons, as their name proclaims the dragonborn walk proudly"
+                                                "through a world that greets them with fearful incomprehension. Shaped"
+                                                "by draconic gods or the dragons themselves,dragonborn originally "
+                                                "hatched from dragon eggs as a unique race, combining the best"
+                                                "attributes of dragons and humanoids. Some dragonborn are faithful"
+                                                "servants to true dragons, others form the ranks of soldiers in great"
+                                                "wars, and still others find themselves adrift, with no clear calling in"
+                                                "life."
+                                 }
         self.mouse_pos = (0, 0)
         self.dnd_class = ""
         self.dnd_race = ""
@@ -120,15 +129,56 @@ class Main:
         event = pygame.event.poll()  # gets one event at a time- stops our use of for loop in main loop.
         if event.type == MOUSEMOTION:  # if mouse is moved
             self.mouse_pos = pygame.mouse.get_pos()  # get it's new position
-        if event.type == MOUSEBUTTONUP and self.races[self.potential_index].selectable:  # if the mouse selects something on the screen.
+        if event.type == MOUSEBUTTONUP and self.races[self.potential_index].selectable:
+            # if the mouse selects something on the screen.
             if self.choose_race:  # if the user is selecting their race.
-                # select that image and move onto a different stage
+                # save name chosen
                 self.dnd_race = self.races[self.potential_index].name
+
+                # add a background for description of character
+                self.surface.fill((0, 0, 0), Rect(0, 0, 300, 750))
+                pygame.display.update(Rect(0, 0, 300, 750))
+
+                # add chosen image to top left screen
+                image_px_array = pygame.PixelArray(self.races[self.potential_index].image)
+                image_px_array.replace((0, 0, 255), (0, 0, 0))
+                image_px_array.close()
+                self.races[self.potential_index].draw((50, 25))
+
+                # add description of race
+                render_string = self.race_description[self.races[self.potential_index].name]
+                render_string = render_string.split("/")
+                x = 0
+                y = 300
+                for text in render_string:
+                    self.render_text(text, x, y, (255, 255, 255), 20)
+                    y += 20
+
+                # spawn new images
+                self.spawn(self.classes, 100, 187, True, False, 300, 0)
+
+                # set new variables.
                 self.choose_race = False
                 self.choose_class = True
         elif (event.type == QUIT) or (event.type == KEYDOWN and event.key == K_ESCAPE):
             # if X is pressed or ESC is pressed
             self.running = False  # end program
+
+    def render_text(self, text: str, x_pos: int, y_pos: int, rgb: Tuple[int, int, int], font_size: int) -> None:
+        """
+        Renders the score.
+        :param str text: The message we are displaying on the screen.
+        :param int x_pos: The top left corner of the message in the x position.
+        :param int y_pos: The top left corner of the message in the y position.
+        :param Tuple[int, int, int] rgb: RGB value of the text- the colour the message is going to be in.
+        :param int font_size: The size of the font.
+        :return: None
+        """
+        font = pygame.font.SysFont("Calibri", font_size)
+        text_surface = font.render(text, False, rgb)
+        self.surface.blit(text_surface, [x_pos, y_pos])
+        pygame.display.update(Rect(x_pos, y_pos, 300, 375))
+
 
     def spawn(self, image_list: list, x_increment: int, y_increment: int, draw: bool, make_class: bool, x_start: int,
               y_start: int) -> List:
