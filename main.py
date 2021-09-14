@@ -56,7 +56,7 @@ class Select(Sprite):
         :return: None
         """
         px_array = pygame.PixelArray(self.image)
-        if self.get_rect().collidepoint(self.mouse_pos) and self.surface.get_at((self.mouse_pos[0], self.mouse_pos[1]))\
+        if self.get_rect().collidepoint(self.mouse_pos) and self.surface.get_at((self.mouse_pos[0], self.mouse_pos[1])) \
                 != (0, 0, 0, 255) and pygame.mouse.get_focused() != 0:
             # if mouse pos is over an image, and where the mouse is over is not black (the border) and the mouse is on
             # the screen
@@ -76,14 +76,14 @@ class Main:
         self.races = ["Dragonborn", "Dwarf", "Elf", "Gnome", "Half-elf", "Half-orc", "Halfling", "Human", "Tiefling"]
         self.classes = ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue",
                         "Sorcerer", "Warlock", "Wizard"]
-        self.race_description = {"Dragonborn": "Born of dragons, as their name proclaims the dragonborn walk proudly"
-                                                "through a world that greets them with fearful incomprehension. Shaped"
-                                                "by draconic gods or the dragons themselves,dragonborn originally "
-                                                "hatched from dragon eggs as a unique race, combining the best"
-                                                "attributes of dragons and humanoids. Some dragonborn are faithful"
-                                                "servants to true dragons, others form the ranks of soldiers in great"
-                                                "wars, and still others find themselves adrift, with no clear calling in"
-                                                "life."
+        self.race_description = {"Dragonborn": "Born of dragons, as their name proclaims, the dragonborn walk proudly "
+                                               "through a world that greets them with fearful incomprehension. Shaped "
+                                               "by draconic gods or the dragons themselves, dragonborn originally "
+                                               "hatched from dragon eggs as a unique race, combining the best "
+                                               "attributes of dragons and humanoids. Some dragonborn are faithful "
+                                               "servants to true dragons, others form the ranks of soldiers in great "
+                                               "wars, and still others find themselves adrift, with no clear calling in "
+                                               "life."
                                  }
         self.mouse_pos = (0, 0)
         self.dnd_class = ""
@@ -147,12 +147,7 @@ class Main:
 
                 # add description of race
                 render_string = self.race_description[self.races[self.potential_index].name]
-                render_string = render_string.split("/")
-                x = 0
-                y = 300
-                for text in render_string:
-                    self.render_text(text, x, y, (255, 255, 255), 20)
-                    y += 20
+                self.render_text(render_string, 20, 300, (255, 255, 255), 20, 20)
 
                 # spawn new images
                 self.spawn(self.classes, 100, 187, True, False, 300, 0)
@@ -164,21 +159,38 @@ class Main:
             # if X is pressed or ESC is pressed
             self.running = False  # end program
 
-    def render_text(self, text: str, x_pos: int, y_pos: int, rgb: Tuple[int, int, int], font_size: int) -> None:
+    def render_text(self, text: str, x_start: int, y_start: int, rgb: Tuple[int, int, int], font_size: int,
+                    y_increment: int) -> None:
         """
-        Renders the score.
+        Renders the score. For loop in here should be alright as we're loading a new selection page for the user.
+        :param int y_increment: How much the y axis will be incremented.
         :param str text: The message we are displaying on the screen.
-        :param int x_pos: The top left corner of the message in the x position.
-        :param int y_pos: The top left corner of the message in the y position.
+        :param int x_start: The top left corner of the message in the x position.
+        :param int y_start: The top left corner of the message in the y position.
         :param Tuple[int, int, int] rgb: RGB value of the text- the colour the message is going to be in.
         :param int font_size: The size of the font.
         :return: None
         """
-        font = pygame.font.SysFont("Calibri", font_size)
-        text_surface = font.render(text, False, rgb)
-        self.surface.blit(text_surface, [x_pos, y_pos])
-        pygame.display.update(Rect(x_pos, y_pos, 300, 375))
+        limit = 35  # line limit
+        split_text = text.split(" ")  # splits text
+        font = pygame.font.SysFont("Calibri", font_size)  # gathers type of font and size
+        temp_text = ""  # temporary string
 
+        for word in split_text:  # for each word in the split text variable.
+            if len(word) + len(temp_text) < limit:  # if length of word and length of temporary string has not reached
+                # the limit
+                temp_text += f"{word} "  # add the word on the temporary string.
+            else:
+                text_surface = font.render(temp_text, False, rgb)  # make text surface
+                self.surface.blit(text_surface, [x_start, y_start])  # blit text at coordinates
+                temp_text = f"{word} "  # any word carried over is the start of the new temporary string.
+                y_start += y_increment  # increment y axis
+        
+        # in case loop stopped and there was some left over text, render and blit it.
+        text_surface = font.render(temp_text, False, rgb)
+        self.surface.blit(text_surface, [x_start, y_start])
+        # update screen
+        pygame.display.update(Rect(0, 300, 300, 450))
 
     def spawn(self, image_list: list, x_increment: int, y_increment: int, draw: bool, make_class: bool, x_start: int,
               y_start: int) -> List:
