@@ -49,7 +49,7 @@ class Select(Sprite):
         self.mouse_pos = mouse_pos
         self.selectable = False
 
-    def hover(self, rgb: Tuple[int, int, int]) -> None:
+    def hover(self, rgb: Tuple[int, int, int], replace_colour: Tuple[int, int, int]) -> None:
         """
         If your mouse is hovering over an image, it will change the border colour, and will tell the program that it's
         selectable
@@ -60,10 +60,10 @@ class Select(Sprite):
                 != (0, 0, 0, 255) and pygame.mouse.get_focused() != 0:
             # if mouse pos is over an image, and where the mouse is over is not black (the border) and the mouse is on
             # the screen
-            px_array.replace((0, 0, 0), rgb)  # replace all occurrences of black with black
+            px_array.replace(replace_colour, rgb)  # replace all occurrences of black with black
             self.selectable = True
         else:
-            px_array.replace(rgb, (0, 0, 0))  # replace all occurrences of blue with black
+            px_array.replace(rgb, replace_colour)  # replace all occurrences of blue with black
             self.selectable = False
 
         px_array.close()  # close the px_array
@@ -83,7 +83,10 @@ class Main:
                                                "attributes of dragons and humanoids. Some dragonborn are faithful "
                                                "servants to true dragons, others form the ranks of soldiers in great "
                                                "wars, and still others find themselves adrift, with no clear calling in "
-                                               "life."
+                                               "life. Racial traits include "
+                                               "your Strength score increasing by 2, and your Charisma score "
+                                               "increasing by 1.",
+                                 "Dwarf": ""
                                  }
         self.mouse_pos = (0, 0)
         self.dnd_class = ""
@@ -110,13 +113,22 @@ class Main:
                 self.image_check = 0
 
             self.races[self.image_check].mouse_pos = self.mouse_pos
-            self.races[self.image_check].hover((0, 0, 255))
+            self.races[self.image_check].hover((0, 0, 255), (0, 0, 0))
 
             if self.races[self.image_check].selectable:
                 self.potential_index = self.image_check
 
         elif self.choose_class:
-            ...
+            try:
+                self.classes[self.image_check]
+            except IndexError:
+                self.image_check = 0
+
+            self.classes[self.image_check].mouse_pos = self.mouse_pos
+            self.classes[self.image_check].hover((0, 0, 0), (255, 255, 255))
+
+            if self.classes[self.image_check].selectable:
+                self.potential_index = self.image_check
 
         self.check_events()
         self.image_check += 1
@@ -155,6 +167,7 @@ class Main:
                 # set new variables.
                 self.choose_race = False
                 self.choose_class = True
+                self.races[self.potential_index].selectable = False
         elif (event.type == QUIT) or (event.type == KEYDOWN and event.key == K_ESCAPE):
             # if X is pressed or ESC is pressed
             self.running = False  # end program
@@ -185,7 +198,7 @@ class Main:
                 self.surface.blit(text_surface, [x_start, y_start])  # blit text at coordinates
                 temp_text = f"{word} "  # any word carried over is the start of the new temporary string.
                 y_start += y_increment  # increment y axis
-        
+
         # in case loop stopped and there was some left over text, render and blit it.
         text_surface = font.render(temp_text, False, rgb)
         self.surface.blit(text_surface, [x_start, y_start])
