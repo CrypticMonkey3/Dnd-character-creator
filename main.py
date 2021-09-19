@@ -82,11 +82,81 @@ class Main:
                                                "hatched from dragon eggs as a unique race, combining the best "
                                                "attributes of dragons and humanoids. Some dragonborn are faithful "
                                                "servants to true dragons, others form the ranks of soldiers in great "
-                                               "wars, and still others find themselves adrift, with no clear calling in "
-                                               "life. Racial traits include "
-                                               "your Strength score increasing by 2, and your Charisma score "
-                                               "increasing by 1.",
-                                 "Dwarf": ""
+                                               "wars, and still others find themselves adrift, with no clear calling "
+                                               "in life. Racial traits include your Strength score increasing by 2, "
+                                               "and your Charisma score increasing by 1.",
+
+                                 "Dwarf": "The members of this race are hearty and steadfast, standing about 4-1/2 "
+                                          "feet tall but powerfully built and extremely broad. They have a strong "
+                                          "connection to mountains and rocky places. They can live to be more than "
+                                          "400 years old. In game terms, dwarves receive a +2 to Constitution. "
+                                          "They also receive bonuses against poison, spells, and magical effects. "
+                                          "Dwarves also have darkvision, the ability to see up to 60 feet in the dark.",
+
+                                 "Human": "These are people just like you and us. They are adaptable, flexible, "
+                                          "and extremely ambitious. Compared to the other races, humans are "
+                                          "relatively short-lived. In game terms, humans get an extra feat on all "
+                                          "their stats.",
+
+                                 "Elf": "Elves have a strong connection to the natural world, especially woodlands. "
+                                          "They can live to be more than 700 years old. Known for being artists of "
+                                          "both song and magic, elves have an affinity for spellcasting and lore. "
+                                          "They stand about 5-1/2 feet tall, appearing graceful and frail. Elves "
+                                          "receive a +2 to Dexterity. They are immune to sleep effects and receive "
+                                          "a bonus against enchantment spells. Elves have low-light vision and a "
+                                          "racial bonus on Listen, Search, and Spot checks.",
+
+                                 "Halfling": "The members of this race are clever and capable — much more so than "
+                                             "their small size might indicate. Standing about 3 feet tall, with slim, "
+                                             "muscular builds, halflings are athletic and outgoing. Curious to a fault "
+                                             "and usually with a daring to match, halflings love to explore. They tend "
+                                             "to live well past 100. Halflings receive a +2 Dexterity to reflect their "
+                                             "small statures. They also receive bonuses to Climb, Jump, Listen, and "
+                                             "Move Silently checks, as well as a bonus to all saving throws due to "
+                                             "their fearlessness and ability to avoid damage.",
+
+                                 "Tiefling": "Tieflings tended to have an unsettling air about them, and most people "
+                                             "were uncomfortable around them, whether they were aware of the "
+                                             "tiefling's unsavory ancestry or not. While some looked like normal "
+                                             "humans, most retained physical characteristics derived from their "
+                                             "ancestor, with the most common such features being horns, "
+                                             "non-prehensile tails, and pointed teeth. Some tieflings also had eyes "
+                                             "that were solid orbs of black, red, white, silver, or gold, while "
+                                             "others had eyes more similar to those of humans. Other, more unusual "
+                                             "characteristics included a sulfurous odor, cloven feet, or a general "
+                                             "aura of discomfort they left on others. In game terms, get an "
+                                             "additional +2 in their charisma stat and a +1 in their intelligence.",
+
+                                 "Gnome": "Gnomes, or the Forgotten Folk as they were sometimes known, were small "
+                                          "humanoids known for their eccentric sense of humor, inquisitiveness, and "
+                                          "engineering prowess. Having had few overt influences on the world's history "
+                                          "but many small and unseen ones, gnomes were often overlooked by the powers "
+                                          "that be, despite their craftiness and affinity for illusion magic. Gnomes "
+                                          "were present in nearly every human city and most caravan-stop villages "
+                                          "where other cultures and non-human races were at least tolerated."
+                                          "In game terms- this character will increase your intelligence stat by +2.",
+
+                                 "Half-orc": "Half-orcs were humanoids born of both human and orc ancestry by a "
+                                             "multitude of means. Having the combined physical power of their orcish "
+                                             "ancestors with the agility of their human ones, half-orcs were "
+                                             "formidable individuals. Though they were often shunned in both human "
+                                             "and orcish society for different reasons, half-orcs have proven "
+                                             "themselves from time to time as worthy heroes and dangerous villains. "
+                                             "Their existence implied an interesting back story that most would not "
+                                             "like to dwell on. In game terms, your strength stat gets +2, whilst your "
+                                             "constitution stat gets a +1 bonus.",
+
+                                 "Half-elf": "Half-elves (also called Cha'Tel'Quessir in elven) were humanoids born "
+                                             "through the union of an elf and a human. Whether a half-elf was raised "
+                                             "by their human parent or their elven parent, they often felt isolated "
+                                             "and alone. Because they took around twenty years to reach adulthood, "
+                                             "they matured quickly when raised by elves, making them feel like an "
+                                             "outsider in either place. Like their elven parents, half-elves were "
+                                             "immune to the effects of the enchantment of magic, whilst also "
+                                             "inheriting the ability to see keenly in low-light conditions, with "
+                                             "little or no ill effect, and had enhanced senses of sight and hearing "
+                                             "compared to their human brethren. In game terms- they receive +2 in "
+                                             "Charisma, and +1 to any other ability scores."
                                  }
         self.mouse_pos = (0, 0)
         self.dnd_class = ""
@@ -106,29 +176,35 @@ class Main:
         The main game process.
         :return: None
         """
-        if self.choose_race:
+        def hovering(images: list, counter: int, colour_r: Tuple[int, int, int], colour_o: Tuple[int, int, int],
+                     mouse_position: Tuple[int, int]) -> int:
+            """
+            Configures all hovering actions of the mouse, and anything the user selects (as a result).
+            :param list images: Image list.
+            :param int counter: The image check
+            :param Tuple[int, int, int] colour_r: The replacement of the original colour, if mouse is over an image.
+            :param Tuple[int, int, int] colour_o: The original colour which will be replaced or regained.
+            :param Tuple[int, int] mouse_position: The mouse's current position on the screen.
+            :return: The counter, so it can be manipulated.
+            """
             try:
-                self.races[self.image_check]
+                images[counter]
             except IndexError:
-                self.image_check = 0
+                counter = 0
 
-            self.races[self.image_check].mouse_pos = self.mouse_pos
-            self.races[self.image_check].hover((0, 0, 255), (0, 0, 0))
+            images[counter].mouse_pos = mouse_position
+            images[counter].hover(colour_r, colour_o)
 
-            if self.races[self.image_check].selectable:
-                self.potential_index = self.image_check
+            if images[counter].selectable:
+                self.potential_index = counter
+
+            return counter
+
+        if self.choose_race:
+            self.image_check = hovering(self.races, self.image_check, (0, 0, 255), (0, 0, 0), self.mouse_pos)
 
         elif self.choose_class:
-            try:
-                self.classes[self.image_check]
-            except IndexError:
-                self.image_check = 0
-
-            self.classes[self.image_check].mouse_pos = self.mouse_pos
-            self.classes[self.image_check].hover((236, 208, 208), (255, 255, 255))
-
-            if self.classes[self.image_check].selectable:
-                self.potential_index = self.image_check
+            self.image_check = hovering(self.classes, self.image_check, (236, 208, 208), (255, 255, 255), self.mouse_pos)
 
         self.check_events()
         self.image_check += 1
@@ -159,7 +235,7 @@ class Main:
 
                 # add description of race
                 render_string = self.race_description[self.races[self.potential_index].name]
-                self.render_text(render_string, 20, 300, (255, 255, 255), 20, 20)
+                self.render_text(render_string, 20, 300, (255, 255, 255), 16, 20)
 
                 # spawn new images
                 self.spawn(self.classes, 100, 187, True, False, 300, 0)
@@ -185,7 +261,7 @@ class Main:
         :param int font_size: The size of the font.
         :return: None
         """
-        limit = 35  # line limit
+        limit = 37  # line limit
         split_text = text.split(" ")  # splits text
         font = pygame.font.SysFont("Calibri", font_size)  # gathers type of font and size
         temp_text = ""  # temporary string
