@@ -176,38 +176,34 @@ class Main:
         The main game process.
         :return: None
         """
-        def hovering(images: list, counter: int, colour_r: Tuple[int, int, int], colour_o: Tuple[int, int, int],
-                     mouse_position: Tuple[int, int]) -> int:
-            """
-            Configures all hovering actions of the mouse, and anything the user selects (as a result).
-            :param list images: Image list.
-            :param int counter: The image check
-            :param Tuple[int, int, int] colour_r: The replacement of the original colour, if mouse is over an image.
-            :param Tuple[int, int, int] colour_o: The original colour which will be replaced or regained.
-            :param Tuple[int, int] mouse_position: The mouse's current position on the screen.
-            :return: The counter, so it can be manipulated.
-            """
-            try:
-                images[counter]
-            except IndexError:
-                counter = 0
-
-            images[counter].mouse_pos = mouse_position
-            images[counter].hover(colour_r, colour_o)
-
-            if images[counter].selectable:
-                self.potential_index = counter
-
-            return counter
 
         if self.choose_race:
-            self.image_check = hovering(self.races, self.image_check, (0, 0, 255), (0, 0, 0), self.mouse_pos)
+            self.hov_image(self.races, (0, 0, 255), (0, 0, 0))
 
         elif self.choose_class:
-            self.image_check = hovering(self.classes, self.image_check, (236, 208, 208), (255, 255, 255), self.mouse_pos)
+            self.hov_image(self.classes, (236, 208, 208), (255, 255, 255))
 
         self.check_events()
         self.image_check += 1
+
+    def hov_image(self, images: list, colour_r: Tuple[int, int, int], colour_o: Tuple[int, int, int]) -> None:
+        """
+        Manages all hovering actions of the mouse on an image, and anything the user selects (as a result).
+        :param list images: Image list.
+        :param Tuple[int, int, int] colour_r: The replacement of the original colour, if mouse is over an image.
+        :param Tuple[int, int, int] colour_o: The original colour which will be replaced or regained.
+        :return: None
+        """
+        try:
+            images[self.image_check]
+        except IndexError:
+            self.image_check = 0
+
+        images[self.image_check].mouse_pos = self.mouse_pos
+        images[self.image_check].hover(colour_r, colour_o)
+
+        if images[self.image_check].selectable:
+            self.potential_index = self.image_check
 
     def check_events(self) -> None:
         """
