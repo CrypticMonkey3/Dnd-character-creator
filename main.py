@@ -40,7 +40,7 @@ class Sprite:
         :param Tuple[int, int] coord: Coordinates of left, and top.
         :return: None
         """
-        self.rect = Rect(coord[0], coord[1], 200, 250)
+        self.rect = Rect(coord[0], coord[1], self.image.get_width(), self.image.get_height())
 
 
 class Select(Sprite):
@@ -49,21 +49,21 @@ class Select(Sprite):
         self.mouse_pos = mouse_pos
         self.selectable = False
 
-    def hover(self, rgb: Tuple[int, int, int], replace_colour: Tuple[int, int, int]) -> None:
+    def hover(self, rgb: Tuple[int, int, int], replacement_colour: Tuple[int, int, int]) -> None:
         """
         If your mouse is hovering over an image, it will change the border colour, and will tell the program that it's
         selectable
         :return: None
         """
         px_array = pygame.PixelArray(self.image)
-        if self.get_rect().collidepoint(self.mouse_pos) and self.surface.get_at((self.mouse_pos[0], self.mouse_pos[1])) \
-                != (0, 0, 0, 255) and pygame.mouse.get_focused() != 0:
+        if self.get_rect().collidepoint(self.mouse_pos) and self.surface.get_at((self.mouse_pos[0], self.mouse_pos[1]))\
+                != (0, 0, 0) and pygame.mouse.get_focused() != 0:
             # if mouse pos is over an image, and where the mouse is over is not black (the border) and the mouse is on
             # the screen
-            px_array.replace(replace_colour, rgb)  # replace all occurrences of black with black
+            px_array.replace(replacement_colour, rgb)
             self.selectable = True
         else:
-            px_array.replace(rgb, replace_colour)  # replace all occurrences of blue with black
+            px_array.replace(rgb, replacement_colour)
             self.selectable = False
 
         px_array.close()  # close the px_array
@@ -125,7 +125,7 @@ class Main:
                 self.image_check = 0
 
             self.classes[self.image_check].mouse_pos = self.mouse_pos
-            self.classes[self.image_check].hover((0, 0, 0), (255, 255, 255))
+            self.classes[self.image_check].hover((236, 208, 208), (255, 255, 255))
 
             if self.classes[self.image_check].selectable:
                 self.potential_index = self.image_check
@@ -168,6 +168,7 @@ class Main:
                 self.choose_race = False
                 self.choose_class = True
                 self.races[self.potential_index].selectable = False
+
         elif (event.type == QUIT) or (event.type == KEYDOWN and event.key == K_ESCAPE):
             # if X is pressed or ESC is pressed
             self.running = False  # end program
@@ -231,7 +232,8 @@ class Main:
                 y += y_increment
                 x = x_start
 
-        return image_list
+        if make_class:
+            return image_list
 
     def run(self) -> None:
         """
