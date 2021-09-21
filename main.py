@@ -159,6 +159,7 @@ class Main:
                                              "Charisma, and +1 to any other ability scores."
                                  }
         self.mouse_pos = (0, 0)
+        self.original_rect = (0, 0)
         self.dnd_class = ""
         self.dnd_race = ""
         self.image_check = 0
@@ -259,6 +260,8 @@ class Main:
         if event.type == MOUSEBUTTONUP and self.races[self.potential_index].selectable:
             # if the mouse selects something on the screen.
             if self.choose_race:  # if the user is selecting their race.
+                # set original rect so, we can re-arrange race menu accordingly later.
+                self.original_rect = self.races[self.potential_index].get_rect()
                 self.set(True)
 
         elif event.type == MOUSEBUTTONUP and self.classes[self.potential_index].selectable:
@@ -277,8 +280,7 @@ class Main:
         elif event.type == MOUSEBUTTONUP and self.back.selectable:
             # if we have clicked on the back button.
             if self.choose_class:
-                print(self.races[self.potential_index].get_rect())
-                self.races[self.potential_index].draw((0, 0))
+                self.races[self.potential_index].draw((self.original_rect[0], self.original_rect[1]))
                 self.choose_class = False
                 self.choose_race = True
 
