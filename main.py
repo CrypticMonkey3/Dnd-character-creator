@@ -165,10 +165,12 @@ class Main:
 
         self.races = self.spawn(self.races, 200, 250, True, True, 0, 0)
         self.classes = self.spawn(self.classes, 0, 0, False, True, 0, 0)
+        self.back = Select(self.surface, "BACK", self.mouse_pos)
 
         self.running = True
         self.choose_race = True
         self.choose_class = False
+        self.dice_roller = False
         self.potential_index = -1  # the potential to select an image
 
     def process(self) -> None:
@@ -176,12 +178,15 @@ class Main:
         The main game process.
         :return: None
         """
-
         if self.choose_race:
             self.hov_image(self.races, (0, 0, 255), (0, 0, 0))
 
         elif self.choose_class:
             self.hov_image(self.classes, (236, 208, 208), (255, 255, 255))
+            self.back.hover((255, 0, 0), (133, 0, 255))
+
+        elif self.dice_roller:
+            ...
 
         self.check_events()
         self.image_check += 1
@@ -229,6 +234,9 @@ class Main:
                 image_px_array.close()
                 self.races[self.potential_index].draw((50, 25))
 
+                # add back button
+                self.back.draw((0, 0))
+
                 # add description of race
                 render_string = self.race_description[self.races[self.potential_index].name]
                 self.render_text(render_string, 20, 300, (255, 255, 255), 16, 20)
@@ -240,6 +248,26 @@ class Main:
                 self.choose_race = False
                 self.choose_class = True
                 self.races[self.potential_index].selectable = False
+
+        elif event.type == MOUSEBUTTONUP and self.classes[self.potential_index].selectable:
+            # once we have selected our class, we move onto the dice roller
+            # reset screen to white.
+            self.surface.fill((255, 255, 255))
+            pygame.display.update()
+
+            # display button to begin roll.
+
+            # switch bool variables.
+            self.dice_roller = True
+            self.choose_class = False
+            self.classes[self.potential_index].selectable = False
+
+        elif event.type == MOUSEBUTTONUP and self.back.selectable:
+            # if we have clicked on the back button.
+            if self.choose_class:
+                self.races[self.potential_index].draw((0, 0))
+                self.choose_class = False
+                self.choose_race = True
 
         elif (event.type == QUIT) or (event.type == KEYDOWN and event.key == K_ESCAPE):
             # if X is pressed or ESC is pressed
