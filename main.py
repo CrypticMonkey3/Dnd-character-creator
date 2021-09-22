@@ -17,15 +17,17 @@ class Sprite:
         self.image = pygame.image.load(f"Graphics/{image}.png").convert_alpha(self.surface)
         self.rect = self.image.get_rect()
 
-    def draw(self, coord: Tuple[int, int]):
+    def draw(self, coord: Tuple[int, int], set_rect: bool = True) -> None:
         """
         Blit image onto the screen.
         :param Tuple[int, int] coord: The coordinates where we'll draw the race image.
+        :param bool set_rect: Checks whether we want to set the rect of an image.
         :return: None
         """
         self.surface.blit(self.image, [coord[0], coord[1]])
-        self.set_rect(coord)
-        pygame.display.update(self.get_rect())
+        if set_rect:
+            self.set_rect(coord)
+        pygame.display.update(Rect(coord[0], coord[1], self.image.get_width(), self.image.get_height()))
 
     def get_rect(self):
         """
@@ -49,7 +51,7 @@ class Select(Sprite):
         self.mouse_pos = mouse_pos
         self.selectable = False
 
-    def hover(self, rgb: Tuple[int, int, int], replacement_colour: Tuple[int, int, int]) -> None:
+    def hover(self, rgb: Tuple[int, int, int], replacement_colour: Tuple[int, int, int], set_rect: bool = True) -> None:
         """
         If your mouse is hovering over an image, it will change the border colour, and will tell the program that it's
         selectable
@@ -67,7 +69,7 @@ class Select(Sprite):
             self.selectable = False
 
         px_array.close()  # close the px_array
-        self.draw((self.get_rect()[0], self.get_rect()[1]))  # draw new results onto the screen
+        self.draw((self.get_rect()[0], self.get_rect()[1]), set_rect)  # draw new results onto the screen
 
 
 class Main:
@@ -159,7 +161,6 @@ class Main:
                                              "Charisma, and +1 to any other ability scores."
                                  }
         self.mouse_pos = (0, 0)
-        self.original_rect = (0, 0)
         self.dnd_class = ""
         self.dnd_race = ""
         self.image_check = 0
@@ -209,7 +210,7 @@ class Main:
             self.image_check = 0
 
         images[self.image_check].mouse_pos = self.mouse_pos
-        images[self.image_check].hover(colour_r, colour_o)
+        images[self.image_check].hover(colour_r, colour_o, False)
 
         if images[self.image_check].selectable:
             self.potential_index = self.image_check
@@ -232,7 +233,7 @@ class Main:
             image_px_array = pygame.PixelArray(self.races[self.potential_index].image)
             image_px_array.replace((0, 0, 255), (0, 0, 0))
             image_px_array.close()
-            self.races[self.potential_index].draw((50, 25))
+            self.races[self.potential_index].draw((50, 25), False)
 
             # add back button
             self.back.draw((0, 0))
@@ -261,7 +262,6 @@ class Main:
             # if the mouse selects something on the screen.
             if self.choose_race:  # if the user is selecting their race.
                 # set original rect so, we can re-arrange race menu accordingly later.
-                self.original_rect = self.races[self.potential_index].get_rect()
                 self.set(True)
 
         elif event.type == MOUSEBUTTONUP and self.classes[self.potential_index].selectable:
@@ -280,7 +280,6 @@ class Main:
         elif event.type == MOUSEBUTTONUP and self.back.selectable:
             # if we have clicked on the back button.
             if self.choose_class:
-                self.races[self.potential_index].draw((self.original_rect[0], self.original_rect[1]))
                 self.choose_class = False
                 self.choose_race = True
 
