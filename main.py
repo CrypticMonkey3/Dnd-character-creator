@@ -1,5 +1,6 @@
-from typing import *
+from random import randrange
 from pygame.locals import *
+from typing import *
 import pygame
 
 pygame.init()
@@ -54,7 +55,10 @@ class Select(Sprite):
     def hover(self, rgb: Tuple[int, int, int], replacement_colour: Tuple[int, int, int], set_rect: bool = True) -> None:
         """
         If your mouse is hovering over an image, it will change the border colour, and will tell the program that it's
-        selectable
+        selectable.
+        :param Tuple[int, int, int] rgb: The colour to replace the original colour.
+        :param Tuple[int, int, int] replacement_colour: The original colour.
+        :param bool set_rect: Whether we want to set the new rect of the image or not.
         :return: None
         """
         px_array = pygame.PixelArray(self.image)
@@ -70,6 +74,39 @@ class Select(Sprite):
 
         px_array.close()  # close the px_array
         self.draw((self.get_rect()[0], self.get_rect()[1]), set_rect)  # draw new results onto the screen
+
+
+class StatsGenerator:
+    def __init__(self, image_name: str, stats: dict):
+        self.image_name = image_name
+        self.stats = stats
+
+    @staticmethod
+    def roll() -> list:
+        """
+        Rolls 4D6 and records the three highest scores per ability.
+        :return: The list of scores
+        """
+        ability_score = []
+        scores_temp = []
+        for ability in range(6):  # loop around 6 times/ number of abilities there are.
+            for i in range(4):  # loop around the number of dice per ability (4).
+                scores_temp.append(randrange(1, 7))  # add it to the end of the temporary list
+            scores_temp.sort()  # sort list, so highest items
+            ability_score.append(scores_temp[-1] + scores_temp[-2] + scores_temp[-3])
+            scores_temp.clear()
+
+        return ability_score
+
+    def modifier(self, stat_name, increase) -> dict:
+        """
+        Modifies the stat of an ability.
+        :param str stat_name: What we're increasing, for example: Strength.
+        :param int increase: How much we're increasing said stat.
+        :return: The new dict of the users (modified) stat.
+        """
+        self.stats[stat_name] += increase
+        return self.stats
 
 
 class Main:
@@ -160,19 +197,29 @@ class Main:
                                              "compared to their human brethren. In game terms- they receive +2 in "
                                              "Charisma, and +1 to any other ability scores."
                                  }
+
+        self.user_stats = {"Strength": 0,
+                           "Dexterity": 0,
+                           "Constitution": 0,
+                           "Wisdom": 0,
+                           "Intelligence": 0,
+                           "Charisma": 0}
         self.mouse_pos = (0, 0)
         self.dnd_class = ""
         self.dnd_race = ""
         self.image_check = 0
 
+        self.stats = StatsGenerator("", self.user_stats)
         self.races = self.spawn(self.races, 200, 250, True, True, 0, 0)
         self.classes = self.spawn(self.classes, 0, 0, False, True, 0, 0)
         self.back = Select(self.surface, "BACK", self.mouse_pos)
+        self.roll = Select(self.surface, "Roll", self.mouse_pos)
 
         self.running = True
         self.choose_race = True
         self.choose_class = False
         self.dice_roller = False
+        self.begin_roll = False
         self.potential_index = -1  # the potential to select an image
 
     def process(self) -> None:
@@ -191,7 +238,11 @@ class Main:
             self.hov_image(self.classes, (236, 208, 208), (255, 255, 255))
 
         elif self.dice_roller:
-            ...
+            self.roll.mouse_pos = self.mouse_pos
+            self.roll.hover((0, 0, 255), (255, 255, 255))
+            if self.begin_roll:
+                stats = self.stats.roll()
+                self.begin_roll = False
 
         self.check_events()
         self.image_check += 1
@@ -215,10 +266,11 @@ class Main:
         if images[self.image_check].selectable:
             self.potential_index = self.image_check
 
-    def set(self, classes=False) -> None:
+    def set(self, classes=False, roller=False) -> None:
         """
         Sets one of the interfaces onto the screen.
         :param bool classes: True, if we want to reset the classes
+        :param bool roller: True, if the user wants to proceed on the ability roller.
         :return: None
         """
         if classes:
@@ -250,6 +302,19 @@ class Main:
             self.choose_class = True
             self.races[self.potential_index].selectable = False
 
+        elif roller:
+            # reset screen to white.
+            self.surface.fill((255, 255, 255))
+            pygame.display.update()
+
+            # display button to begin roll.
+            self.roll.draw(((WIDTH // 2) - 50, HEIGHT // 2))
+
+            # switch bool variables.
+            self.dice_roller = True
+            self.choose_class = False
+            self.classes[self.potential_index].selectable = False
+
     def check_events(self) -> None:
         """
         Checks for any pygame events.
@@ -258,24 +323,15 @@ class Main:
         event = pygame.event.poll()  # gets one event at a time- stops our use of for loop in main loop.
         if event.type == MOUSEMOTION:  # if mouse is moved
             self.mouse_pos = pygame.mouse.get_pos()  # get it's new position
-        if event.type == MOUSEBUTTONUP and self.races[self.potential_index].selectable:
-            # if the mouse selects something on the screen.
-            if self.choose_race:  # if the user is selecting their race.
-                # set original rect so, we can re-arrange race menu accordingly later.
-                self.set(True)
+
+        if event.type == MOUSEBUTTONUP and self.races[self.potential_index].selectable and self.choose_race:
+            # if the mouse selects something on the screen and the user is selecting their race.
+            # set original rect so, we can re-arrange race menu accordingly later.
+            self.set(True)
 
         elif event.type == MOUSEBUTTONUP and self.classes[self.potential_index].selectable:
             # once we have selected our class, we move onto the dice roller
-            # reset screen to white.
-            self.surface.fill((255, 255, 255))
-            pygame.display.update()
-
-            # display button to begin roll.
-
-            # switch bool variables.
-            self.dice_roller = True
-            self.choose_class = False
-            self.classes[self.potential_index].selectable = False
+            self.set(roller=True)
 
         elif event.type == MOUSEBUTTONUP and self.back.selectable:
             # if we have clicked on the back button.
@@ -285,6 +341,10 @@ class Main:
 
             elif self.dice_roller:
                 self.set(True)
+
+        elif event.type == MOUSEBUTTONUP and self.roll.selectable:
+            # if we have pressed the roll button.
+            self.begin_roll = True
 
         elif (event.type == QUIT) or (event.type == KEYDOWN and event.key == K_ESCAPE):
             # if X is pressed or ESC is pressed
