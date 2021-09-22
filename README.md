@@ -1,6 +1,5 @@
 # Dnd-character-creator
 - Create program
-- - Selecting class and race - CURRENT
-- - Ability scroller
+- - Make class descriptions
+- - Ability scroller - Current
 - - Stat modifier depending on character
-- - Ability modifier
