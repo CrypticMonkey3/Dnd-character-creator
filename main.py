@@ -236,7 +236,8 @@ class Main:
         self.dice_roller = False
         self.begin_roll = False
         self.stats_rolled = False
-        self.potential_index = -1  # the potential to select an image
+        self.race_potential_index = -1  # the potential to select an image of a race
+        self.class_potential_index = -1
 
     def process(self) -> None:
         """
@@ -284,10 +285,13 @@ class Main:
         images[self.image_check].mouse_pos = self.mouse_pos
         images[self.image_check].hover(colour_r, colour_o, False)
 
-        if images[self.image_check].selectable:
-            self.potential_index = self.image_check
+        if images[self.image_check].selectable and self.choose_race:
+            self.race_potential_index = self.image_check
 
-    def set(self, classes=False, roller=False) -> None:
+        elif images[self.image_check].selectable and self.choose_class:
+            self.class_potential_index = self.image_check
+
+    def set(self, classes: bool = False, roller: bool = False) -> None:
         """
         Sets one of the interfaces onto the screen.
         :param bool classes: True, if we want to reset the classes
@@ -296,23 +300,23 @@ class Main:
         """
         if classes:
             # save name chosen
-            self.dnd_race = self.races[self.potential_index].get_name()
+            self.dnd_race = self.races[self.race_potential_index].get_name()
 
             # add a background for description of character
             self.surface.fill((0, 0, 0), Rect(0, 0, 300, 750))
             pygame.display.update(Rect(0, 0, 300, 750))
 
             # add chosen image to top left screen
-            image_px_array = pygame.PixelArray(self.races[self.potential_index].get_image())
+            image_px_array = pygame.PixelArray(self.races[self.race_potential_index].get_image())
             image_px_array.replace((0, 0, 255), (0, 0, 0))
             image_px_array.close()
-            self.races[self.potential_index].draw((50, 25), False)
+            self.races[self.race_potential_index].draw((50, 25), False)
 
             # add back button
             self.back.draw((0, 0))
 
             # add description of race
-            render_string = self.race_description[self.races[self.potential_index].get_name()]
+            render_string = self.race_description[self.races[self.race_potential_index].get_name()]
             self.render_text(render_string, 20, 300, (255, 255, 255), 16, 20)
 
             # spawn new images
@@ -321,9 +325,12 @@ class Main:
             # set new variables.
             self.choose_race = False
             self.choose_class = True
-            self.races[self.potential_index].selectable = False
+            self.races[self.race_potential_index].selectable = False
 
         elif roller:
+            # save dnd class
+            self.dnd_class = self.classes[self.class_potential_index].get_name()
+
             # reset screen to white.
             self.surface.fill((255, 255, 255))
             pygame.display.update()
@@ -334,7 +341,7 @@ class Main:
             # switch bool variables.
             self.dice_roller = True
             self.choose_class = False
-            self.classes[self.potential_index].selectable = False
+            self.classes[self.class_potential_index].selectable = False
 
     def check_events(self) -> None:
         """
@@ -345,12 +352,12 @@ class Main:
         if event.type == MOUSEMOTION:  # if mouse is moved
             self.mouse_pos = pygame.mouse.get_pos()  # get it's new position
 
-        if event.type == MOUSEBUTTONUP and self.races[self.potential_index].selectable and self.choose_race:
+        if event.type == MOUSEBUTTONUP and self.races[self.race_potential_index].selectable and self.choose_race:
             # if the mouse selects something on the screen and the user is selecting their race.
             # set original rect so, we can re-arrange race menu accordingly later.
             self.set(True)
 
-        elif event.type == MOUSEBUTTONUP and self.classes[self.potential_index].selectable:
+        elif event.type == MOUSEBUTTONUP and self.classes[self.class_potential_index].selectable and self.choose_class:
             # once we have selected our class, we move onto the dice roller
             self.set(roller=True)
 
