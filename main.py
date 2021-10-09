@@ -45,6 +45,20 @@ class Sprite:
         """
         self.rect = Rect(coord[0], coord[1], self.image.get_width(), self.image.get_height())
 
+    def get_name(self) -> str:
+        """
+        Gets the name of the chosen thing.
+        :return: str
+        """
+        return self.name
+
+    def get_image(self) -> pygame.Surface:
+        """
+        Gets the image object
+        :return: pygame.Surface
+        """
+        return self.image
+
 
 class Select(Sprite):
     def __init__(self, surface, image, mouse_pos: Tuple[int, int]):
@@ -214,12 +228,14 @@ class Main:
         self.classes = self.spawn(self.classes, 0, 0, False, True, 0, 0)
         self.back = Select(self.surface, "BACK", self.mouse_pos)
         self.roll = Select(self.surface, "Roll", self.mouse_pos)
+        self.box = Select(self.surface, "Box", self.mouse_pos)
 
         self.running = True
         self.choose_race = True
         self.choose_class = False
         self.dice_roller = False
         self.begin_roll = False
+        self.stats_rolled = False
         self.potential_index = -1  # the potential to select an image
 
     def process(self) -> None:
@@ -242,7 +258,12 @@ class Main:
             self.roll.hover((0, 0, 255), (255, 255, 255))
             if self.begin_roll:
                 stats = self.stats.roll()
-                self.begin_roll = False
+                self.begin_roll = False  # so it won't continuously generate new rolls
+                self.stats_rolled = True
+
+            if self.stats_rolled:  # if stats have been rolled.
+                # spawn boxes, render text with boxes, sort numbers into recommended boxes/ stat categories.
+                ...
 
         self.check_events()
         self.image_check += 1
@@ -275,14 +296,14 @@ class Main:
         """
         if classes:
             # save name chosen
-            self.dnd_race = self.races[self.potential_index].name
+            self.dnd_race = self.races[self.potential_index].get_name()
 
             # add a background for description of character
             self.surface.fill((0, 0, 0), Rect(0, 0, 300, 750))
             pygame.display.update(Rect(0, 0, 300, 750))
 
             # add chosen image to top left screen
-            image_px_array = pygame.PixelArray(self.races[self.potential_index].image)
+            image_px_array = pygame.PixelArray(self.races[self.potential_index].get_image())
             image_px_array.replace((0, 0, 255), (0, 0, 0))
             image_px_array.close()
             self.races[self.potential_index].draw((50, 25), False)
@@ -291,7 +312,7 @@ class Main:
             self.back.draw((0, 0))
 
             # add description of race
-            render_string = self.race_description[self.races[self.potential_index].name]
+            render_string = self.race_description[self.races[self.potential_index].get_name()]
             self.render_text(render_string, 20, 300, (255, 255, 255), 16, 20)
 
             # spawn new images
