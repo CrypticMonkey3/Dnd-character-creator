@@ -183,7 +183,7 @@ class Main:
 
                                  "Elf": "Elves have a strong connection to the natural world, especially woodlands. "
                                           "They can live to be more than 700 years old. Known for being artists of "
-                                          "both song and magic, elves have an affinity for spellcasting and lore. "
+                                          "both song and magic, elves have an affinity for spell-casting and lore. "
                                           "They stand about 5-1/2 feet tall, appearing graceful and frail. Elves "
                                           "receive a +2 to Dexterity. They are immune to sleep effects and receive "
                                           "a bonus against enchantment spells. Elves have low-light vision and a "
@@ -262,6 +262,7 @@ class Main:
         self.begin_roll = False
         self.race_potential_index = -1  # the potential to select an image of a race
         self.class_potential_index = -1
+        self.draw_once = True
 
     def process(self) -> None:
         """
@@ -287,17 +288,20 @@ class Main:
                 self.begin_roll = False  # so it won't continuously generate new rolls
 
             if self.user_stats:
-                # render text with boxes, sort numbers into recommended boxes/ stat categories.
+                # sort numbers into boxes/ stat categories, allow dragging.
                 ...
             else:
-                # (continuously) draw in the boxes ->   (because of constant updating it slows performance by a
-                # minuscule amount until stats are rolled).
-                self.box.draw((25, 50), False)
-                self.box.draw((25, HEIGHT // 2 + 65), False)
-                self.box.draw((225, 50), False)
-                self.box.draw((225, HEIGHT // 2 + 65), False)
-                self.box.draw((425, 50))
-                self.box.draw((425, HEIGHT // 2 + 65), False)
+                # draw in the boxes
+                if self.draw_once:
+                    self.box.draw((25, 50), False)
+                    self.render_text("Wisdom", 48, 60, (0, 0, 0), 30, update_rect=(48, 60, 120, 25))
+                    self.box.draw((25, HEIGHT // 2 + 65), False)
+                    self.box.draw((225, 50), False)
+                    self.render_text("Intelligence", 241, 60, (0, 0, 0), 25, update_rect=(241, 60, 120, 25))
+                    self.box.draw((225, HEIGHT // 2 + 65), False)
+                    self.box.draw((425, 50))
+                    self.box.draw((425, HEIGHT // 2 + 65), False)
+                    self.draw_once = False
 
         self.check_events()
         self.image_check += 1
@@ -402,6 +406,7 @@ class Main:
                 self.choose_race = True
 
             elif self.dice_roller:
+                self.draw_once = True
                 self.set(True)
 
         elif event.type == MOUSEBUTTONUP and self.roll.is_selectable():
@@ -413,7 +418,8 @@ class Main:
             self.running = False  # end program
 
     def render_text(self, text: str, x_start: int, y_start: int, rgb: Tuple[int, int, int], font_size: int,
-                    y_increment: int, limit: int = 37) -> None:
+                    y_increment: int = 0, limit: int = 37,
+                    update_rect: Tuple[int, int, int, int] = (0, 300, 300, 450)) -> None:
         """
         Renders the score. For loop in here should be alright as we're loading a new selection page for the user.
         :param int y_increment: How much the y axis will be incremented.
@@ -423,27 +429,32 @@ class Main:
         :param Tuple[int, int, int] rgb: RGB value of the text- the colour the message is going to be in.
         :param int font_size: The size of the font.
         :param int limit: Line limit before we move to a new line.
+        :param Tuple[int, int, int, int] update_rect: The rect to which we will update the screen.
         :return: None
         """
         split_text = text.split(" ")  # splits text
         font = pygame.font.SysFont("Calibri", font_size)  # gathers type of font and size
         temp_text = ""  # temporary string
 
-        for word in split_text:  # for each word in the split text variable.
-            if len(word) + len(temp_text) < limit:  # if length of word and length of temporary string has not reached
-                # the limit
-                temp_text += f"{word} "  # add the word on the temporary string.
-            else:
-                text_surface = font.render(temp_text, False, rgb)  # make text surface
-                self.surface.blit(text_surface, [x_start, y_start])  # blit text at coordinates
-                temp_text = f"{word} "  # any word carried over is the start of the new temporary string.
-                y_start += y_increment  # increment y axis
+        if len(split_text) == 1:
+            temp_text = text
+
+        else:
+            for word in split_text:  # for each word in the split text variable.
+                if len(word) + len(temp_text) < limit:  # if length of word and length of temporary string has not
+                    # reached the limit
+                    temp_text += f"{word} "  # add the word on the temporary string.
+                else:
+                    text_surface = font.render(temp_text, False, rgb)  # make text surface
+                    self.surface.blit(text_surface, [x_start, y_start])  # blit text at coordinates
+                    temp_text = f"{word} "  # any word carried over is the start of the new temporary string.
+                    y_start += y_increment  # increment y axis
 
         # in case loop stopped and there was some left over text, render and blit it.
         text_surface = font.render(temp_text, False, rgb)
         self.surface.blit(text_surface, [x_start, y_start])
         # update screen
-        pygame.display.update(Rect(0, 300, 300, 450))
+        pygame.display.update(Rect(update_rect))
 
     def spawn(self, image_list: list, x_increment: int, y_increment: int, draw: bool, make_class: bool, x_start: int,
               y_start: int) -> List:
