@@ -89,17 +89,33 @@ class Select(Sprite):
         px_array.close()  # close the px_array
         self.draw((self.get_rect()[0], self.get_rect()[1]), set_rect)  # draw new results onto the screen
 
+    def is_selectable(self) -> bool:
+        """
+        Returns True, if object is selectable, False otherwise.
+        :return: bool
+        """
+        return self.selectable
+
+    def set_selectable(self, select: bool) -> None:
+        """
+        Sets the selectivity of the object.
+        :param bool select: Whether we can now select the object or not.
+        :return: None
+        """
+        self.selectable = select
+
 
 class StatsGenerator:
-    def __init__(self, image_name: str, stats: dict):
-        self.image_name = image_name
+    def __init__(self, image_name: str = "", stats=None):
         self.stats = stats
+        if self.stats is None:
+            self.stats = {}
+        self.race_name = image_name
 
-    @staticmethod
-    def roll() -> list:
+    def roll(self) -> dict:
         """
         Rolls 4D6 and records the three highest scores per ability.
-        :return: The list of scores
+        :return: The dictionary of the stats.
         """
         ability_score = []
         scores_temp = []
@@ -110,16 +126,30 @@ class StatsGenerator:
             ability_score.append(scores_temp[-1] + scores_temp[-2] + scores_temp[-3])
             scores_temp.clear()
 
-        return ability_score
+        self.stats["Strength"] = ability_score[0]
+        self.stats["Dexterity"] = ability_score[1]
+        self.stats["Charisma"] = ability_score[2]
+        self.stats["Constitution"] = ability_score[3]
+        self.stats["Intelligence"] = ability_score[4]
+        self.stats["Wisdom"] = ability_score[5]
 
-    def modifier(self, stat_name, increase) -> dict:
+        return self.stats
+
+    def set_name(self, name) -> None:
         """
-        Modifies the stat of an ability.
-        :param str stat_name: What we're increasing, for example: Strength.
-        :param int increase: How much we're increasing said stat.
-        :return: The new dict of the users (modified) stat.
+        Sets name of users chosen race.
+        :return: None
         """
-        self.stats[stat_name] += increase
+        self.race_name = name
+
+    def modifier(self, category: str, amount: int) -> dict:
+        """
+        Modifies the stats of the character chosen.
+        :param str category: The stat category we are manipulating, ie Strength, dex, etc.
+        :param int amount: The amount we are increasing that stat category by.
+        :return: The new dict.
+        """
+        self.stats[category] += amount
         return self.stats
 
 
@@ -212,18 +242,13 @@ class Main:
                                              "Charisma, and +1 to any other ability scores."
                                  }
 
-        self.user_stats = {"Strength": 0,
-                           "Dexterity": 0,
-                           "Constitution": 0,
-                           "Wisdom": 0,
-                           "Intelligence": 0,
-                           "Charisma": 0}
+        self.user_stats = {}
         self.mouse_pos = (0, 0)
         self.dnd_class = ""
         self.dnd_race = ""
         self.image_check = 0
 
-        self.stats = StatsGenerator("", self.user_stats)
+        self.stats_gen = StatsGenerator(stats=self.user_stats)
         self.races = self.spawn(self.races, 200, 250, True, True, 0, 0)
         self.classes = self.spawn(self.classes, 0, 0, False, True, 0, 0)
         self.back = Select(self.surface, "BACK", self.mouse_pos)
@@ -235,7 +260,6 @@ class Main:
         self.choose_class = False
         self.dice_roller = False
         self.begin_roll = False
-        self.stats_rolled = False
         self.race_potential_index = -1  # the potential to select an image of a race
         self.class_potential_index = -1
 
@@ -257,14 +281,23 @@ class Main:
         elif self.dice_roller:
             self.roll.mouse_pos = self.mouse_pos
             self.roll.hover((0, 0, 255), (255, 255, 255))
-            if self.begin_roll:
-                stats = self.stats.roll()
+            if self.begin_roll:  # if roll button is pressed.
+                self.stats_gen.set_name(self.races[self.race_potential_index].get_name())
+                self.user_stats = self.stats_gen.roll()
                 self.begin_roll = False  # so it won't continuously generate new rolls
-                self.stats_rolled = True
 
-            if self.stats_rolled:  # if stats have been rolled.
-                # spawn boxes, render text with boxes, sort numbers into recommended boxes/ stat categories.
+            if self.user_stats:
+                # render text with boxes, sort numbers into recommended boxes/ stat categories.
                 ...
+            else:
+                # (continuously) draw in the boxes ->   (because of constant updating it slows performance by a
+                # minuscule amount until stats are rolled).
+                self.box.draw((25, 50), False)
+                self.box.draw((25, HEIGHT // 2 + 65), False)
+                self.box.draw((225, 50), False)
+                self.box.draw((225, HEIGHT // 2 + 65), False)
+                self.box.draw((425, 50))
+                self.box.draw((425, HEIGHT // 2 + 65), False)
 
         self.check_events()
         self.image_check += 1
@@ -285,10 +318,10 @@ class Main:
         images[self.image_check].mouse_pos = self.mouse_pos
         images[self.image_check].hover(colour_r, colour_o, False)
 
-        if images[self.image_check].selectable and self.choose_race:
+        if images[self.image_check].is_selectable() and self.choose_race:
             self.race_potential_index = self.image_check
 
-        elif images[self.image_check].selectable and self.choose_class:
+        elif images[self.image_check].is_selectable() and self.choose_class:
             self.class_potential_index = self.image_check
 
     def set(self, classes: bool = False, roller: bool = False) -> None:
@@ -325,7 +358,7 @@ class Main:
             # set new variables.
             self.choose_race = False
             self.choose_class = True
-            self.races[self.race_potential_index].selectable = False
+            self.races[self.race_potential_index].set_selectable(False)
 
         elif roller:
             # save dnd class
@@ -336,12 +369,12 @@ class Main:
             pygame.display.update()
 
             # display button to begin roll.
-            self.roll.draw(((WIDTH // 2) - 50, HEIGHT // 2))
+            self.roll.draw(((WIDTH // 2) - 50, HEIGHT // 2 - 60))
 
             # switch bool variables.
             self.dice_roller = True
             self.choose_class = False
-            self.classes[self.class_potential_index].selectable = False
+            self.classes[self.class_potential_index].set_selectable(False)
 
     def check_events(self) -> None:
         """
@@ -352,16 +385,17 @@ class Main:
         if event.type == MOUSEMOTION:  # if mouse is moved
             self.mouse_pos = pygame.mouse.get_pos()  # get it's new position
 
-        if event.type == MOUSEBUTTONUP and self.races[self.race_potential_index].selectable and self.choose_race:
+        if event.type == MOUSEBUTTONUP and self.races[self.race_potential_index].is_selectable() and self.choose_race:
             # if the mouse selects something on the screen and the user is selecting their race.
             # set original rect so, we can re-arrange race menu accordingly later.
             self.set(True)
 
-        elif event.type == MOUSEBUTTONUP and self.classes[self.class_potential_index].selectable and self.choose_class:
+        elif event.type == MOUSEBUTTONUP and self.classes[self.class_potential_index].is_selectable() and \
+                self.choose_class:
             # once we have selected our class, we move onto the dice roller
             self.set(roller=True)
 
-        elif event.type == MOUSEBUTTONUP and self.back.selectable:
+        elif event.type == MOUSEBUTTONUP and self.back.is_selectable():
             # if we have clicked on the back button.
             if self.choose_class:
                 self.choose_class = False
@@ -370,7 +404,7 @@ class Main:
             elif self.dice_roller:
                 self.set(True)
 
-        elif event.type == MOUSEBUTTONUP and self.roll.selectable:
+        elif event.type == MOUSEBUTTONUP and self.roll.is_selectable():
             # if we have pressed the roll button.
             self.begin_roll = True
 
@@ -379,7 +413,7 @@ class Main:
             self.running = False  # end program
 
     def render_text(self, text: str, x_start: int, y_start: int, rgb: Tuple[int, int, int], font_size: int,
-                    y_increment: int) -> None:
+                    y_increment: int, limit: int = 37) -> None:
         """
         Renders the score. For loop in here should be alright as we're loading a new selection page for the user.
         :param int y_increment: How much the y axis will be incremented.
@@ -388,9 +422,9 @@ class Main:
         :param int y_start: The top left corner of the message in the y position.
         :param Tuple[int, int, int] rgb: RGB value of the text- the colour the message is going to be in.
         :param int font_size: The size of the font.
+        :param int limit: Line limit before we move to a new line.
         :return: None
         """
-        limit = 37  # line limit
         split_text = text.split(" ")  # splits text
         font = pygame.font.SysFont("Calibri", font_size)  # gathers type of font and size
         temp_text = ""  # temporary string
