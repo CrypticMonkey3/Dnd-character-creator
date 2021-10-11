@@ -105,6 +105,28 @@ class Select(Sprite):
         self.selectable = select
 
 
+class Box(Sprite):
+    def __init__(self, surface, image: str, category: str, value: int = 0):
+        super().__init__(surface, image)
+        self.category = category
+        self.value = value
+        self.found_font_size = False
+
+    def title(self) -> None:
+        """
+        Finds length of category, and depending on that length find a suitable font size, and display on box.
+        :return: None
+        """
+        font_size = len(self.category)
+
+    def get_value(self) -> int:
+        """
+        Gets the value of the category.
+        :return: int
+        """
+        return self.value
+
+
 class StatsGenerator:
     def __init__(self, image_name: str = "", stats=None):
         self.stats = stats
@@ -290,7 +312,6 @@ class Main:
             if self.user_stats:
                 # sort numbers into boxes/ stat categories, allow dragging.
                 ...
-
             else:
                 # draw in the boxes
                 if self.draw_once:
