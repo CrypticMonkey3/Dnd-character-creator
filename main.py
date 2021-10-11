@@ -290,17 +290,25 @@ class Main:
             if self.user_stats:
                 # sort numbers into boxes/ stat categories, allow dragging.
                 ...
+
             else:
                 # draw in the boxes
                 if self.draw_once:
-                    self.box.draw((25, 50), False)
+                    self.box.draw((25, 50))
                     self.render_text("Wisdom", 48, 60, (0, 0, 0), 30, update_rect=(48, 60, 120, 25))
-                    self.box.draw((25, HEIGHT // 2 + 65), False)
-                    self.box.draw((225, 50), False)
+                    self.box.draw((25, HEIGHT // 2 + 65))
+                    self.render_text("Strength", 48, HEIGHT // 2 + 73, (0, 0, 0), 30, update_rect=(48, HEIGHT // 2 + 75,
+                                                                                                   120, 25))
+                    self.box.draw((225, 50))
                     self.render_text("Intelligence", 241, 60, (0, 0, 0), 25, update_rect=(241, 60, 120, 25))
-                    self.box.draw((225, HEIGHT // 2 + 65), False)
+                    self.box.draw((225, HEIGHT // 2 + 65))
+                    self.render_text("Dexterity", 244, HEIGHT // 2 + 73, (0, 0, 0), 30, update_rect=(244, HEIGHT // 2 +
+                                                                                                     75, 120, 25))
                     self.box.draw((425, 50))
-                    self.box.draw((425, HEIGHT // 2 + 65), False)
+                    self.render_text("Constitution", 438, 60, (0, 0, 0), 25, update_rect=(438, 60, 125, 25))
+                    self.box.draw((425, HEIGHT // 2 + 65))
+                    self.render_text("Charisma", 444, HEIGHT // 2 + 73, (0, 0, 0), 30, update_rect=(444, HEIGHT // 2 +
+                                                                                                    73, 120, 25))
                     self.draw_once = False
 
         self.check_events()
