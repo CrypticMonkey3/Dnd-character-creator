@@ -1,11 +1,24 @@
 from tkinter import *
 from tkinter import ttk
 import tkinter.font as font
-from selenium import webdriver
-from pygeckodriver import geckodriver_path
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import *
 import os.path
+counter = 0
+while counter != 1:  # looped so that if we did need to install something, we can import that module.
+    try:
+        from selenium import webdriver
+        from pygeckodriver import geckodriver_path
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.common.exceptions import *
+        counter += 1
+    except ModuleNotFoundError:
+        import sys
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pygeckodriver"])
+        # subprocess.check_call() runs the arguments from within and waits for it to be complete.
+        # sys.executable retrieves the path to where the instruction should be executed, in this case our python
+        # environment.
+        # So, it runs and installs selenium and the pygeckodriver onto the current python environment.
 
 WIDTH = 400
 HEIGHT = 304
@@ -50,7 +63,12 @@ class WebScraper:
         Closes the current web-driver.
         :return: None
         """
-        self.driver.close()
+        try:
+            self.driver.close()
+        except AttributeError:
+            pass
+        except WebDriverException:  # if there was no response from the headless connection.
+            pass
 
 
 class SetupGUI:
@@ -63,6 +81,7 @@ class SetupGUI:
         self.root = root
         self.root.title(self.title_message)
         self.root.geometry(f"{WIDTH}x{HEIGHT}")
+        self.root.resizable(False, False)  # users can't resize the window
 
         # setting the main frame.
         self.mainframe = ttk.Frame(self.root)
@@ -76,11 +95,13 @@ class SetupGUI:
 
         # setting any text objects.
         self.title = ttk.Label(self.mainframe, text="Welcome to Dnd Startup", font=font.Font(size=13))
+        self.error_message = ttk.Label(self.mainframe, text="Connection was interrupted")
+        self.download_message = ttk.Label(self.mainframe, text="File(s) download successful")
 
         # setting any radiobuttons
         self.gui_version = ttk.Radiobutton(self.mainframe, text="GUI version", variable=self.option, value="GUI")
-        self.text_version = ttk.Radiobutton(self.mainframe, text="Text-based version", variable=self.option,
-                                            value="TEXT")
+        self.text_version = ttk.Radiobutton(self.mainframe, text="Text-based version (unavailable)",
+                                            variable=self.option, value="TEXT")
 
         # setting up any buttons.
         self.download_button = ttk.Button(self.mainframe, text="Download")
@@ -91,7 +112,13 @@ class SetupGUI:
         :param str event: The event
         :return: None
         """
-        if event == "DOWNLOAD":
+        if event == "DOWNLOAD" and self.option.get() == "GUI":
+            try:
+                # tries to remove the old versions of the file
+                os.remove(fr"C:\Users\{os.listdir('C://Users')[-1]}\Downloads\Dnd-character-creator-main.zip")
+            except FileNotFoundError:
+                pass
+
             try:
                 self.scraper.remote_web_for("https://github.com/CrypticMonkey3/Dnd-character-creator")
                 self.scraper.click_button("//summary[normalize-space()='Code']")
@@ -101,18 +128,11 @@ class SetupGUI:
                 self.scraper.click_button("//a[normalize-space()='Download ZIP']")
                 self.scraper.wait(7)
                 self.scraper.close()
-                if self.title_message != "Dnd Startup":
-                    self.title_message = "Dnd Startup"
+                self.download_message.grid(column=1, row=0, sticky=(N, E), pady=260)
 
-            except WebDriverException:
+            except WebDriverException:  # if the driver was never able to load, due to lack of Internet connection.
                 self.scraper.close()
-                self.title_message += " -> No Internet available"
-
-            if os.path.exists(r"C:\Users\olive\Downloads\Dnd-character-creator-main.zip"):
-                # add the green dnd logo instead of the red one.
-                ...
-
-        self.root.title(self.title_message)
+                self.error_message.grid(column=1, row=0, sticky=(N, E), pady=260)
 
     def process(self) -> None:
         """
