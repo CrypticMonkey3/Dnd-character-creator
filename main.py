@@ -111,13 +111,24 @@ class Box(Sprite):
         self.category = category
         self.value = value
         self.found_font_size = False
+        self.prev_font_size = (0, 0)
+        self.font = 1
 
-    def title(self) -> None:
+    def title(self, font_size: int, width: int = 127, height: int = 24) -> int:
         """
         Finds length of category, and depending on that length find a suitable font size, and display on box.
-        :return: None
+        :param int width: The amount of pixels wide the text has to be before it's acceptable.
+        :param int height: The amount of pixels high the text has to be before it's acceptable.
+        :param int font_size: Our initial font size
+        :return: int, 1 to increase font size, -1 to decrease, 0 if it's an acceptable font size.
         """
-        font_size = len(self.category)
+        # need a way to tell whether font needs to increase or not: perhaps using 1 for increase, -1 for decrease, 0
+        # otherwise.
+        self.font = pygame.font.SysFont("Calibri", font_size)
+        size = self.font.size(self.category)
+
+
+
 
     def get_value(self) -> int:
         """
